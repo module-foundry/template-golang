@@ -101,7 +101,7 @@ func responsesFor(route httpx.Route, schemas map[string]any) map[string]any {
 	if isEmptyType(route.Response) {
 		responses[fmt.Sprintf("%d", http.StatusNoContent)] = map[string]any{"description": "No Content"}
 	} else {
-		schema := schemaForType(route.Response, schemas)
+		schema := successEnvelope(schemaForType(route.Response, schemas))
 		responses[fmt.Sprintf("%d", status)] = map[string]any{
 			"description": "Success",
 			"content": map[string]any{
@@ -114,6 +114,16 @@ func responsesFor(route httpx.Route, schemas map[string]any) map[string]any {
 	}
 	responses["default"] = errorResponse("Error")
 	return responses
+}
+
+// successEnvelope wraps a payload schema in the success shape {"result": ...}
+// produced by pkg/response.
+func successEnvelope(payload map[string]any) map[string]any {
+	return map[string]any{
+		"type":       "object",
+		"properties": map[string]any{"result": payload},
+		"required":   []any{"result"},
+	}
 }
 
 func errorResponse(description string) map[string]any {

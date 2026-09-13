@@ -35,6 +35,19 @@ The client always receives a generic message; details stay in logs
 
 ## Response shape
 
+Successful responses wrap the payload under `result`:
+
+```json
+{
+  "result": {
+    "token": "jwt",
+    "user_id": "42"
+  }
+}
+```
+
+Errors use the `error` envelope:
+
 ```json
 {
   "error": {

@@ -9,14 +9,22 @@ import (
 	"template-golang/pkg/apperror"
 )
 
-// OK writes a 200 response with a JSON body.
-func OK(c fiber.Ctx, v any) error {
-	return c.Status(fiber.StatusOK).JSON(v)
+// Envelope is the single success shape: the payload is nested under "result".
+// Wrapping keeps room for metadata (pagination, warnings) without breaking the
+// payload contract, so error and success bodies stay distinguishable on the
+// client.
+type Envelope struct {
+	Result any `json:"result"`
 }
 
-// Created writes a 201 response with a JSON body.
+// OK writes a 200 response with the payload under "result".
+func OK(c fiber.Ctx, v any) error {
+	return c.Status(fiber.StatusOK).JSON(Envelope{Result: v})
+}
+
+// Created writes a 201 response with the payload under "result".
 func Created(c fiber.Ctx, v any) error {
-	return c.Status(fiber.StatusCreated).JSON(v)
+	return c.Status(fiber.StatusCreated).JSON(Envelope{Result: v})
 }
 
 // NoContent writes a 204 response.

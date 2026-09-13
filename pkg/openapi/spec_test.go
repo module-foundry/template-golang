@@ -75,6 +75,23 @@ func TestBuildContainsPathsAndSecurity(t *testing.T) {
 	}
 }
 
+func TestSuccessEnvelope(t *testing.T) {
+	spec := Build(testRegistry(), Config{Title: "t", Version: "1", CookieName: "c"})
+	paths := spec["paths"].(map[string]any)
+	post := paths["/auth/mini-apps/telegram"].(map[string]any)["post"].(map[string]any)
+	responses := post["responses"].(map[string]any)
+	created := responses["201"].(map[string]any)
+	schema := created["content"].(map[string]any)["application/json"].(map[string]any)["schema"].(map[string]any)
+	properties := schema["properties"].(map[string]any)
+	if _, ok := properties["result"]; !ok {
+		t.Fatalf("success schema must expose result: %v", schema)
+	}
+	required := schema["required"].([]any)
+	if len(required) != 1 || required[0] != "result" {
+		t.Fatalf("result must be required: %v", required)
+	}
+}
+
 func TestBuildIsDeterministic(t *testing.T) {
 	cfg := Config{Title: "t", Version: "1", CookieName: "access_token"}
 	first, err := jsonx.MarshalDeterministic(Build(testRegistry(), cfg))

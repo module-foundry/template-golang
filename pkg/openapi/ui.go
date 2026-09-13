@@ -30,8 +30,9 @@ func Document(reg *httpx.Registry, cfg Config) ([]byte, error) {
 	return cached, buildErr
 }
 
-// Register mounts /openapi.json and the Scalar UI at /docs.
-// Scalar assets are embedded: no CDN dependency, no build step.
+// Register mounts /openapi.json and the Scalar UI at /docs on the given router
+// (the API group carries the base path). Scalar assets are embedded: no CDN
+// dependency, no build step.
 func Register(router fiber.Router, reg *httpx.Registry, cfg Config, log *slog.Logger) {
 	base := strings.TrimRight(cfg.BasePath, "/")
 

@@ -30,6 +30,14 @@ func TestOK(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Fatalf("status = %d", resp.StatusCode)
 	}
+	var body Envelope
+	if err := jsonx.Unmarshal(readAll(t, resp), &body); err != nil {
+		t.Fatal(err)
+	}
+	result, ok := body.Result.(map[string]any)
+	if !ok || result["status"] != "ok" {
+		t.Fatalf("payload not wrapped in result: %s", body.Result)
+	}
 }
 
 func TestCreated(t *testing.T) {
@@ -44,6 +52,13 @@ func TestCreated(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != 201 {
 		t.Fatalf("status = %d", resp.StatusCode)
+	}
+	var body Envelope
+	if err := jsonx.Unmarshal(readAll(t, resp), &body); err != nil {
+		t.Fatal(err)
+	}
+	if result, ok := body.Result.(map[string]any); !ok || result["id"] != "1" {
+		t.Fatalf("payload not wrapped in result: %s", body.Result)
 	}
 }
 

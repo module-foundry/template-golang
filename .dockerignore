@@ -16,5 +16,4 @@ docs/
 docker-compose.yml
 Taskfile.yml
 .air.toml
-.serena/
 task.md

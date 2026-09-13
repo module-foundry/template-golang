@@ -18,6 +18,7 @@ import (
 
 	"template-golang/pkg/apperror"
 	"template-golang/pkg/jsonx"
+	"template-golang/pkg/response"
 	"template-golang/pkg/validx"
 )
 
@@ -175,13 +176,12 @@ func register[Req, Resp any](
 			return err
 		}
 		if _, ok := any(resp).(Empty); ok {
-			return c.SendStatus(fiber.StatusNoContent)
+			return response.NoContent(c)
 		}
-		status := fiber.StatusOK
 		if method == fiber.MethodPost {
-			status = fiber.StatusCreated
+			return response.Created(c, resp)
 		}
-		return c.Status(status).JSON(resp)
+		return response.OK(c, resp)
 	}
 
 	switch method {

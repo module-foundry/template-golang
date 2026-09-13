@@ -2,6 +2,7 @@ package httpx
 
 import (
 	"context"
+	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -50,6 +51,33 @@ func TestPostSuccess(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != 201 {
 		t.Fatalf("status = %d, want 201", resp.StatusCode)
+	}
+}
+
+func TestResponseWrappedInResult(t *testing.T) {
+	app := newTestApp()
+	reg := NewRegistry()
+	registerCreate(t, app, reg)
+
+	req := httptest.NewRequest(fiber.MethodPost, "/items", strings.NewReader(`{"name":"order-1"}`))
+	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var envelope struct {
+		Result createResponse `json:"result"`
+	}
+	if err := jsonx.Unmarshal(body, &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if envelope.Result.ID != "order-1" {
+		t.Fatalf("result = %+v, body = %s", envelope.Result, body)
 	}
 }
 

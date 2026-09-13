@@ -54,6 +54,9 @@ router.go (composition root модуля: repo -> service -> handler, роуты
 Два вида: `API` (4xx, безопасное сообщение) и `Runtime` (5xx, generic-ответ,
 cause — только в логах). Коды — константы в `pkg/apperror/codes.go`, набор
 минимальный и стабильный; HTTP-статусы берутся только из `fiber.Status*`.
+Успешные ответы идут через `pkg/response` и оборачивают payload в
+`{"result": ...}`; ошибки приходят в конверте `error`, поэтому клиент различает
+их, не глядя на статус-код.
 
 Поля лога ошибки: `type`, `message`, `trace`, `kind`, `http_status`,
 `request_id`, `user_id`, для runtime — `error` (cause).
