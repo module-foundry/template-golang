@@ -1,0 +1,27 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - contextcheck
+    - errorlint
+    - exhaustive
+    - gocritic
+    - makezero
+    - misspell
+    - noctx
+    - perfsprint
+    - prealloc
+    - revive
+    - tparallel
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports

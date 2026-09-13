@@ -1,0 +1,9 @@
+{
+  "editor.formatOnSave": true,
+  "go.toolsManagement.autoUpdate": false,
+  "gopls": {
+    "formatting.gofumpt": true
+  },
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true
+}

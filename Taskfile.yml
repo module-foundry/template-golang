@@ -1,0 +1,152 @@
+version: "3"
+
+dotenv: [".env"]
+
+vars:
+  DLV_VERSION: v1.27.2
+  AIR_VERSION: v1.67.4
+  GOOSE_VERSION: v3.28.0
+  COMMITLINT_VERSION: v0.12.0
+  OASDIFF_VERSION: v1.31.0
+
+tasks:
+  default:
+    cmds:
+      - task --list
+
+  setup:
+    desc: Install dev tools and download modules
+    cmds:
+      - go mod download
+      - go install github.com/go-delve/delve/cmd/dlv@{{.DLV_VERSION}}
+      - go install github.com/air-verse/air@{{.AIR_VERSION}}
+      - go install github.com/pressly/goose/v3/cmd/goose@{{.GOOSE_VERSION}}
+      - go install github.com/conventionalcommit/commitlint@{{.COMMITLINT_VERSION}}
+      - go install github.com/oasdiff/oasdiff@{{.OASDIFF_VERSION}}
+
+  dev:
+    desc: Run with hot reload (Air)
+    cmds:
+      - air
+
+  run:
+    desc: Run the API
+    cmds:
+      - go run ./cmd/api
+
+  build:
+    desc: Build the API binary
+    cmds:
+      - go build -o bin/api ./cmd/api
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./...
+
+  test:cover:
+    desc: Unit tests with coverage report and pkg/* gate
+    cmds:
+      - go test -covermode=atomic -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out
+      - go run ./tools/covergate -profile coverage.out -threshold 90 -exclude pkg/postgres/,pkg/redisx/
+
+  bench:
+    desc: Run benchmarks for hot paths
+    cmds:
+      - go test -run '^$' -bench . -benchmem ./pkg/...
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run
+
+  check:
+    desc: Fast checks (fmt, vet, tests)
+    cmds:
+      - gofmt -l ./cmd ./internal ./pkg ./tools
+      - go vet ./...
+      - go test ./...
+
+  verify:
+    desc: Full local gate (check + coverage gate + build + API contract)
+    cmds:
+      - task: check
+      - task: test:cover
+      - task: api:check
+      - task: build
+
+  api:check:
+    desc: Verify the public API contract (routes snapshot + OpenAPI golden)
+    cmds:
+      - go test ./internal/app -run 'TestRouteSnapshot|TestOpenAPIGolden'
+
+  openapi:dump:
+    desc: Regenerate docs/openapi.json
+    cmds:
+      - go run ./cmd/api -dump-openapi > docs/openapi.json
+
+  commit:lint:
+    desc: Lint the last commit message with Conventional Commits rules
+    cmds:
+      - git log -1 --format=%B | go run github.com/conventionalcommit/commitlint@{{.COMMITLINT_VERSION}} lint
+
+  hooks:install:
+    desc: Install the commit-msg hook
+    cmds:
+      - go run github.com/conventionalcommit/commitlint@{{.COMMITLINT_VERSION}} init
+
+  env:check:
+    desc: Validate configuration and exit
+    cmds:
+      - go run ./cmd/api -check-env
+
+  migrate:create:
+    desc: Create a migration (task migrate:create -- add_orders)
+    cmds:
+      - goose -dir migrations create {{.CLI_ARGS}} sql
+
+  migrate:up:
+    desc: Apply all migrations
+    cmds:
+      - goose -dir migrations postgres "{{.POSTGRES_DSN}}" up
+
+  migrate:down:
+    desc: Roll back the last migration
+    cmds:
+      - goose -dir migrations postgres "{{.POSTGRES_DSN}}" down
+
+  migrate:status:
+    desc: Show migration status
+    cmds:
+      - goose -dir migrations postgres "{{.POSTGRES_DSN}}" status
+
+  gen:module:
+    desc: Scaffold a new module (task gen:module -- order)
+    cmds:
+      - go run ./tools/genmodule -name {{.CLI_ARGS}}
+
+  infra:up:
+    desc: Start PostgreSQL and Redis
+    cmds:
+      - docker compose up -d postgres redis
+
+  infra:down:
+    desc: Stop infrastructure
+    cmds:
+      - docker compose down
+
+  docker:build:
+    desc: Build the Docker image
+    cmds:
+      - docker build -t template-golang:local .
+
+  docker:run:
+    desc: Run the Docker image with the local .env
+    cmds:
+      - docker run --rm --env-file .env -p 3001:3001 template-golang:local
+
+  oasdiff:
+    desc: Check for breaking OpenAPI changes against a base spec
+    cmds:
+      - oasdiff breaking {{.BASE}} docs/openapi.json
