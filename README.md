@@ -1,4 +1,4 @@
-# template-golang
+# Template Golang
 
 Fast and safe Go backend template: Fiber v3, PostgreSQL (pgx), Redis, JWT auth, runtime OpenAPI (Scalar UI), embedded goose migrations and an AI-ready layer (instructions + skills).
 

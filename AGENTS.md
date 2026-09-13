@@ -1,60 +1,60 @@
 # AGENTS.md
 
-Операционный хаб проекта. Держи файл коротким: детали — в instructions и скиллах.
+Project operations hub. Keep this file short: details belong in instructions and skills.
 
-## Алгоритм работы
+## Workflow
 
-1. Классифицируй задачу по таблице маршрутизации и **загрузи скилл через tool `skill` до написания кода**.
-2. Работай строго по шагам скилла (он самодостаточен: команды, настройки, шаблоны).
-3. Перед словом «готово» обязательно выполни скилл `preflight` (`task verify`, `task api:check`).
-4. Не меняй публичный контракт API (роуты, DTO, коды ошибок, статусы) без явного запроса.
+1. Classify the task using the routing table and **load the skill through the `skill` tool before writing code**.
+2. Follow the skill steps exactly (it is self-contained: commands, settings, templates).
+3. Before saying "done", always run the `preflight` skill (`task verify`, `task api:check`).
+4. Do not change the public API contract (routes, DTOs, error codes, statuses) without an explicit request.
 
-## Маршрутизация задач
+## Task Routing
 
-| Задача / триггер | Скилл |
+| Task / trigger | Skill |
 | --- | --- |
-| «добавь endpoint/фичу/модуль» | `add-module` (цепочка: `tdd-tests`, `pgx-queries`) |
-| «запрос к БД», «repository-метод» | `pgx-queries` |
-| «миграция», «изменить схему» | `create-migration` (`pgx-queries`) |
-| «ошибка», «лог», «обработка ошибок» | `error-handling` |
-| «тесты», «TDD», «покрытие», «бенчмарк» | `tdd-tests` |
+| "add an endpoint/feature/module" | `add-module` (chain: `tdd-tests`, `pgx-queries`) |
+| "database query", "repository method" | `pgx-queries` |
+| "migration", "change the schema" | `create-migration` (`pgx-queries`) |
+| "error", "log", "error handling" | `error-handling` |
+| "tests", "TDD", "coverage", "benchmark" | `tdd-tests` |
 | «realtime», «websocket», «ws» | `add-realtime` |
 | «swagger», «openapi», «orval» | `openapi` |
-| «закоммить», «commit» | `commit` (только явный запрос или явная точка коммита) |
-| «документация», «docs», «readme», «adr» | `docs` |
-| «готово», «проверь», «перед продом» | `preflight` |
-| «добавь скилл», «обнови правила AI» | `add-skill` |
+| "commit", "make a commit" | `commit` (explicit request or explicit commit point only) |
+| "documentation", "docs", "readme", "adr" | `docs` |
+| "done", "check", "before production" | `preflight` |
+| "add a skill", "update AI rules" | `add-skill` |
 
-## Команды
+## Commands
 
 ```bash
-task setup      # инструменты + зависимости
-task dev        # hot reload (Air); миграции применит старт приложения
-task test       # unit-тесты
-task test:cover # покрытие + gate pkg/* >= 90%
-task bench      # бенчмарки hot paths
-task verify     # полный локальный гейт
-task api:check  # контракт API: snapshot роутов + golden OpenAPI
-task env:check  # проверка .env
+task setup      # tools and dependencies
+task dev        # hot reload (Air); application startup applies migrations
+task test       # unit tests
+task test:cover # coverage and pkg/* >= 90% gate
+task bench      # hot-path benchmarks
+task verify     # full local gate
+task api:check  # API contract: route snapshot and golden OpenAPI
+task env:check  # validate .env
 ```
 
-F5 в VS Code запускает API под dlv (профиль «API (debug)»).
+F5 in VS Code starts the API under dlv (the "API (debug)" profile).
 
-## Карта проекта
+## Project Map
 
-- `cmd/api` — единственная точка входа (`-check-env`, `-dump-openapi`, `-healthcheck`).
-- `internal/app` — сборка зависимостей, роуты, lifecycle.
-- `internal/config` — типизированный конфиг и валидация.
-- `internal/middleware` — auth (JWT), request id/log.
-- `internal/modules/<name>` — вертикальный срез: `router.go` (composition root) + handler + service + repository + dto.
-- `pkg/*` — переиспользуемые пакеты по зонам ответственности (без локальных utils).
-- `migrations` — SQL + автозапуск goose.
-- `docs/<topic>/{en,ru}.md` — документация (README только EN).
-- `.opencode/` — правила (`instructions`) и скиллы.
+- `cmd/api` - the only entry point (`-check-env`, `-dump-openapi`, `-healthcheck`).
+- `internal/app` - dependency wiring, routes, lifecycle.
+- `internal/config` - typed configuration and validation.
+- `internal/middleware` - auth (JWT), request ID/logging.
+- `internal/modules/<name>` - vertical slice: `router.go` (composition root) + handler + service + repository + DTO.
+- `pkg/*` - reusable packages by responsibility area (no local utils).
+- `migrations` - SQL and automatic goose execution.
+- `docs/<topic>/{en,ru}.md` - documentation (README in English only).
+- `.opencode/` - rules (`instructions`) and skills.
 
-## Правила верхнего уровня
+## Top-Level Rules
 
-- `.opencode/instructions/*` загружаются всегда и обязательны к соблюдению.
-- Публичный API заморожен: `task api:check` должен быть зелёным.
-- Комментарии и код — на английском; доки — `docs/<topic>/{en,ru}.md`.
-- Новые зависимости, коды ошибок и env-переменные — только с обоснованием и обновлением docs/.env.example.
+- `.opencode/instructions/*` are always loaded and must be followed.
+- The public API is frozen: `task api:check` must pass.
+- Comments and code must be in English; documentation belongs in `docs/<topic>/{en,ru}.md`.
+- Add dependencies, error codes, and environment variables only with justification and updates to docs/.env.example.
