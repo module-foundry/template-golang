@@ -55,7 +55,6 @@ func RegisterRoutes(root fiber.Router, deps RouteDeps) {
 			Version:     deps.Version,
 			Description: "Runtime-generated API reference",
 			CookieName:  deps.Config.CookieName,
-			BasePath:    basePath,
 		}, deps.Log)
 	}
 
