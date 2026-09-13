@@ -1,23 +1,31 @@
 package app
 
 import (
+	"net/http/httptest"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/gofiber/fiber/v3"
+
 	"template-golang/internal/config"
+	"template-golang/pkg/apperror"
+	"template-golang/pkg/httpx"
 	"template-golang/pkg/jsonx"
+	"template-golang/pkg/jwtx"
 	"template-golang/pkg/openapi"
 )
 
 func testConfig() *config.Config {
 	return &config.Config{
-		AppEnv:     config.EnvDevelopment,
-		AppName:    "template-golang",
-		JWTSecret:  "test-secret",
-		JWTTTL:     time.Hour,
-		CookieName: "access_token",
+		AppEnv:      config.EnvDevelopment,
+		AppName:     "template-golang",
+		JWTSecret:   "test-secret",
+		JWTTTL:      time.Hour,
+		CookieName:  "access_token",
+		APIBasePath: "/api/v1",
 	}
 }
 
@@ -38,10 +46,49 @@ func TestRouteSnapshot(t *testing.T) {
 	}
 
 	want := []snapshot{
-		{Method: "POST", Path: "/auth/mini-apps/telegram", OperationID: "auth.Handler.Telegram", Protected: false},
+		{Method: "POST", Path: "/api/v1/auth/mini-apps/telegram", OperationID: "auth.Handler.Telegram", Protected: false},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("route contract changed:\n got: %+v\nwant: %+v", got, want)
+	}
+}
+
+// TestRuntimeMounting guards the Fiber group ordering: docs and public routes
+// live under the API prefix without auth, while the old paths are gone.
+func TestRuntimeMounting(t *testing.T) {
+	cfg := testConfig()
+	cfg.FeatureOpenAPIEnabled = true
+	server := fiber.New(fiber.Config{
+		JSONEncoder:  jsonx.FiberEncoder,
+		JSONDecoder:  jsonx.FiberDecoder,
+		ErrorHandler: apperror.Handler(nil),
+	})
+	RegisterRoutes(server, RouteDeps{
+		Config:   cfg,
+		Registry: httpx.NewRegistry(),
+		Signer:   jwtx.New(cfg.JWTSecret, cfg.JWTTTL, cfg.CookieName),
+	})
+
+	cases := []struct {
+		method string
+		path   string
+		want   int
+	}{
+		{fiber.MethodGet, "/api/v1/docs", fiber.StatusOK},
+		{fiber.MethodGet, "/api/v1/openapi.json", fiber.StatusOK},
+		{fiber.MethodPost, "/api/v1/auth/mini-apps/telegram", fiber.StatusCreated},
+	}
+	for _, tc := range cases {
+		req := httptest.NewRequest(tc.method, tc.path, strings.NewReader(`{}`))
+		req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+		resp, err := server.Test(req)
+		if err != nil {
+			t.Fatalf("%s %s: %v", tc.method, tc.path, err)
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode != tc.want {
+			t.Fatalf("%s %s status = %d, want %d", tc.method, tc.path, resp.StatusCode, tc.want)
+		}
 	}
 }
 

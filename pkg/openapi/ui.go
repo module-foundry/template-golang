@@ -2,7 +2,9 @@ package openapi
 
 import (
 	_ "embed"
+	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 
 	"github.com/gofiber/fiber/v3"
@@ -31,6 +33,8 @@ func Document(reg *httpx.Registry, cfg Config) ([]byte, error) {
 // Register mounts /openapi.json and the Scalar UI at /docs.
 // Scalar assets are embedded: no CDN dependency, no build step.
 func Register(router fiber.Router, reg *httpx.Registry, cfg Config, log *slog.Logger) {
+	base := strings.TrimRight(cfg.BasePath, "/")
+
 	router.Get("/openapi.json", func(c fiber.Ctx) error {
 		doc, err := Document(reg, cfg)
 		if err != nil {
@@ -47,15 +51,21 @@ func Register(router fiber.Router, reg *httpx.Registry, cfg Config, log *slog.Lo
 
 	router.Get("/docs", func(c fiber.Ctx) error {
 		c.Set(fiber.HeaderContentType, fiber.MIMETextHTMLCharsetUTF8)
-		return c.SendString(docsHTML)
+		return c.SendString(docsHTML(base))
 	})
 
 	if log != nil {
-		log.Info("openapi enabled", slog.String("docs", "/docs"), slog.String("spec", "/openapi.json"))
+		log.Info("openapi enabled",
+			slog.String("docs", base+"/docs"),
+			slog.String("spec", base+"/openapi.json"))
 	}
 }
 
-const docsHTML = `<!doctype html>
+func docsHTML(basePath string) string {
+	return fmt.Sprintf(docsHTMLTemplate, basePath, basePath)
+}
+
+const docsHTMLTemplate = `<!doctype html>
 <html>
   <head>
     <title>API Reference</title>
@@ -63,7 +73,7 @@ const docsHTML = `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
   <body>
-    <script id="api-reference" data-url="/openapi.json"></script>
-    <script src="/docs/scalar.js"></script>
+    <script id="api-reference" data-url="%s/openapi.json"></script>
+    <script src="%s/docs/scalar.js"></script>
   </body>
 </html>`

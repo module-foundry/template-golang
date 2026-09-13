@@ -37,24 +37,30 @@ type RouteDeps struct {
 func RegisterRoutes(root fiber.Router, deps RouteDeps) {
 	registerHealth(root, deps)
 
-	public := root.Group("")
-	protected := root.Group("/", middleware.Auth(deps.Signer))
+	basePath := deps.Config.BasePath()
+	api := root.Group(basePath)
 
+	// Public routes (and docs) must be registered before the protected group.
+	// In Fiber a group middleware is a Use-handler that guards every route
+	// added after it under the same prefix, so ordering is significant.
+	public := api.Group("")
 	auth.Register(public, deps.Registry, auth.Deps{
 		Config: deps.Config,
 		Signer: deps.Signer,
 	})
 
-	_ = protected // new protected modules are registered here, e.g. user.Register(protected, ...)
-
 	if deps.Config.FeatureOpenAPIEnabled {
-		openapi.Register(root, deps.Registry, openapi.Config{
+		openapi.Register(api, deps.Registry, openapi.Config{
 			Title:       deps.Config.AppName,
 			Version:     deps.Version,
 			Description: "Runtime-generated API reference",
 			CookieName:  deps.Config.CookieName,
+			BasePath:    basePath,
 		}, deps.Log)
 	}
+
+	protected := api.Group("", middleware.Auth(deps.Signer))
+	_ = protected // new protected modules are registered here, e.g. user.Register(protected, ...)
 }
 
 func registerHealth(root fiber.Router, deps RouteDeps) {
@@ -77,7 +83,7 @@ func registerHealth(root fiber.Router, deps RouteDeps) {
 func BuildRegistry(cfg *config.Config) *httpx.Registry {
 	registry := httpx.NewRegistry()
 	probe := fiber.New(fiber.Config{AppName: cfg.AppName})
-	auth.Register(probe.Group(""), registry, auth.Deps{
+	auth.Register(probe.Group(cfg.BasePath()), registry, auth.Deps{
 		Config: cfg,
 		Signer: jwtx.New(cfg.JWTSecret, cfg.JWTTTL, cfg.CookieName),
 	})

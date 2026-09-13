@@ -13,8 +13,8 @@ swaggo в хендлерах) требует doc-комментариев на �
 - `pkg/httpx` записывает метод, путь, operationId, типы DTO и флаг авторизации.
 - `pkg/openapi` строит OpenAPI 3.0.3 в рантайме через reflection по
   зарегистрированным типам; ассеты Scalar UI встроены в бинарь.
-- Документ раздаётся на `/openapi.json` и `/docs`; `docs/openapi.json` — golden
-  файл под тестом; в CI работает `oasdiff breaking`.
+- Документ раздаётся на `{API_BASE_PATH}/openapi.json` и `{API_BASE_PATH}/docs`;
+  `docs/openapi.json` — golden файл под тестом; в CI работает `oasdiff breaking`.
 
 Выбран OpenAPI 3.0.3 (не 3.1) для максимальной совместимости с Orval.
 

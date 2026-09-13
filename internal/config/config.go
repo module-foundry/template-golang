@@ -45,6 +45,10 @@ type Config struct {
 	HTTPIdleTimeout  time.Duration `env:"HTTP_IDLE_TIMEOUT,default=60s"`
 	ShutdownTimeout  time.Duration `env:"SHUTDOWN_TIMEOUT,default=10s"`
 
+	// APIBasePath is the prefix every API route (including /docs) is mounted
+	// under. Empty mounts the API at the server root.
+	APIBasePath string `env:"API_BASE_PATH,default=/api/v1"`
+
 	PostgresDSN      string `env:"POSTGRES_DSN,required"`
 	PostgresMaxConns int32  `env:"POSTGRES_MAX_CONNS,default=10"`
 	PostgresMinConns int32  `env:"POSTGRES_MIN_CONNS,default=1"`
@@ -71,6 +75,21 @@ func (c *Config) IsProduction() bool { return c.AppEnv == EnvProduction }
 
 // Addr is the listen address.
 func (c *Config) Addr() string { return fmt.Sprintf("%s:%d", c.HTTPHost, c.HTTPPort) }
+
+// BasePath returns the API prefix normalized: a leading slash and no trailing
+// slash. An empty value mounts the API at the server root.
+func (c *Config) BasePath() string { return normalizeBasePath(c.APIBasePath) }
+
+func normalizeBasePath(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" || path == "/" {
+		return ""
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return strings.TrimRight(path, "/")
+}
 
 // CORSOrigins returns the comma-separated allow-list, trimmed and deduplicated.
 func (c *Config) CORSOrigins() []string {
@@ -115,6 +134,9 @@ func (c *Config) Validate() error {
 	}
 	if c.HTTPPort < 1 || c.HTTPPort > 65535 {
 		problems = append(problems, fmt.Errorf("HTTP_PORT must be in range 1..65535"))
+	}
+	if strings.ContainsAny(c.APIBasePath, " \t\r\n?#") {
+		problems = append(problems, fmt.Errorf("API_BASE_PATH must be a URL path without spaces, query or fragment"))
 	}
 	if strings.TrimSpace(c.JWTSecret) == "" {
 		problems = append(problems, fmt.Errorf("JWT_SECRET is required"))

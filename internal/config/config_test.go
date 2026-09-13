@@ -34,6 +34,34 @@ func TestLoadDefaults(t *testing.T) {
 	}
 }
 
+func TestAPIBasePathNormalization(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"/api/v1", "/api/v1"},
+		{"api/v1/", "/api/v1"},
+		{"/api/v1/", "/api/v1"},
+		{"  /api/v1  ", "/api/v1"},
+		{"/", ""},
+		{"", ""},
+	}
+	for _, tc := range cases {
+		cfg := &Config{APIBasePath: tc.in}
+		if got := cfg.BasePath(); got != tc.want {
+			t.Fatalf("BasePath(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestValidateInvalidBasePath(t *testing.T) {
+	setRequired(t)
+	t.Setenv("API_BASE_PATH", "/api/v1?x=1")
+	if _, err := Load(); err == nil {
+		t.Fatal("expected API_BASE_PATH validation error")
+	}
+}
+
 func TestCORSOriginsParsing(t *testing.T) {
 	setRequired(t)
 	t.Setenv("CORS_ALLOWED_ORIGINS", " http://a.example ,https://b.example,,http://a.example ")

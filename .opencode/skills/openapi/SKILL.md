@@ -13,10 +13,11 @@ description: Use when working with Swagger/OpenAPI, the API reference UI or Orva
   types and auth flag.
 - `pkg/openapi` builds an OpenAPI 3.0.3 document at runtime from the registry
   and reflection over DTOs. No comments or annotations in handlers.
-- Endpoints (enabled by `FEATURE_OPENAPI_ENABLED=true`):
-  - `GET /openapi.json` — the document;
-  - `GET /docs` — Scalar UI (assets embedded, no CDN, no build step).
-- Orval consumes `http://localhost:3001/openapi.json` in dev or the golden
+- Endpoints (enabled by `FEATURE_OPENAPI_ENABLED=true`), mounted under
+  `API_BASE_PATH` (default `/api/v1`):
+  - `GET {API_BASE_PATH}/openapi.json` — the document;
+  - `GET {API_BASE_PATH}/docs` — Scalar UI (assets embedded, no CDN, no build step).
+- Orval consumes `http://localhost:3001/api/v1/openapi.json` in dev or the golden
   `docs/openapi.json` in CI.
 
 ## DTO requirements

@@ -13,8 +13,9 @@ handlers into noise and drifts from the code.
 - `pkg/httpx` records method, path, operationId, DTO types and auth flag.
 - `pkg/openapi` builds an OpenAPI 3.0.3 document at runtime via reflection over
   the recorded DTO types; Scalar UI assets are embedded.
-- The document is served at `/openapi.json` and `/docs`; `docs/openapi.json` is
-  a golden file guarded by a test; CI runs `oasdiff breaking`.
+- The document is served at `{API_BASE_PATH}/openapi.json` and
+  `{API_BASE_PATH}/docs`; `docs/openapi.json` is a golden file guarded by a test;
+  CI runs `oasdiff breaking`.
 
 OpenAPI 3.0.3 (not 3.1) is chosen for maximum Orval compatibility.
 

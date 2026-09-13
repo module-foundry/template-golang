@@ -139,7 +139,7 @@ func register[Req, Resp any](
 	var req Req
 	route := Route{
 		Method:      method,
-		Path:        path,
+		Path:        joinPath(router, path),
 		OperationID: operationID,
 		Tag:         tag,
 		Request:     reflect.TypeOf(&req).Elem(),
@@ -194,6 +194,27 @@ func register[Req, Resp any](
 	case fiber.MethodDelete:
 		router.Delete(path, handler)
 	}
+}
+
+// joinPath returns the path as mounted by the router: the group prefix plus
+// the route path. The registry stores full paths so OpenAPI matches the real
+// routes. Routers without a group prefix (apps) keep the path unchanged.
+func joinPath(router fiber.Router, path string) string {
+	group, ok := router.(*fiber.Group)
+	if !ok {
+		return path
+	}
+	prefix := strings.TrimRight(group.Prefix, "/")
+	if prefix == "" {
+		return path
+	}
+	if path == "" {
+		return prefix
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return prefix + path
 }
 
 func deriveOperationID(fn any) string {

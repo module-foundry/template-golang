@@ -40,9 +40,11 @@ router.go (composition root модуля: repo -> service -> handler, роуты
 1. Middleware `RequestID` выдаёт/пробрасывает `X-Request-ID`.
 2. `RequestLogger` создаёт request-scoped логгер и кладёт его в контекст.
 3. `recover`, `cors`, `helmet` (и `pprof`, если включён).
-4. `/auth/*` — публичные роуты; всё, что требует авторизации, монтируется в
-   protected-группу (`middleware.Auth`): сначала cookie `access_token`, затем
-   `Authorization: Bearer`.
+4. Роуты монтируются под `API_BASE_PATH` (по умолчанию `/api/v1`). `/auth/*` и
+   доки — публичные; всё, что требует авторизации, монтируется в protected-группу
+   (`middleware.Auth`): сначала cookie `access_token`, затем
+   `Authorization: Bearer`. В Fiber групповая middleware защищает только роуты,
+   зарегистрированные после неё, поэтому публичные роуты и доки идут первыми.
 5. Типизированный handler: строгий парсинг JSON -> валидация -> сервис.
 6. Ошибки возвращаются наверх и один раз логируются/форматируются в
    `apperror.Handler`.
@@ -74,7 +76,7 @@ cause — только в логах). Коды — константы в `pkg/a
 ## Контракт API
 
 Роуты регистрируются только через `pkg/httpx`; реестр питает рантайм-OpenAPI
-(`/openapi.json`, `/docs`). `docs/openapi.json` защищён golden-тестом, таблица
+(`{API_BASE_PATH}/openapi.json`, `{API_BASE_PATH}/docs`). `docs/openapi.json` защищён golden-тестом, таблица
 роутов — snapshot-тестом, в CI работает `oasdiff breaking`. Случайное изменение
 публичного контракта валит пайплайн.
 

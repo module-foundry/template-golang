@@ -140,6 +140,43 @@ func TestProtectedOption(t *testing.T) {
 	}
 }
 
+func TestJoinPath(t *testing.T) {
+	app := newTestApp()
+	cases := []struct {
+		name   string
+		router fiber.Router
+		path   string
+		want   string
+	}{
+		{"plain app", app, "/items", "/items"},
+		{"root group", app.Group(""), "/items", "/items"},
+		{"slash group", app.Group("/"), "/items", "/items"},
+		{"prefixed group", app.Group("/api/v1"), "/items", "/api/v1/items"},
+		{"group with empty path", app.Group("/api/v1"), "", "/api/v1"},
+		{"group without leading slash", app.Group("/api/v1"), "items", "/api/v1/items"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := joinPath(tc.router, tc.path); got != tc.want {
+				t.Fatalf("joinPath = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestRegistryRecordsGroupPrefix(t *testing.T) {
+	app := newTestApp()
+	reg := NewRegistry()
+	api := app.Group("/api/v1")
+	Get(reg, api, "/ping", func(context.Context, struct{}) (createResponse, error) {
+		return createResponse{}, nil
+	})
+
+	if got := reg.Routes()[0].Path; got != "/api/v1/ping" {
+		t.Fatalf("route path = %q, want /api/v1/ping", got)
+	}
+}
+
 func TestRegistryRoutesSorted(t *testing.T) {
 	reg := NewRegistry()
 	reg.Add(Route{Method: fiber.MethodGet, Path: "/b"})

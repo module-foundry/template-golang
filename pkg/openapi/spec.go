@@ -20,6 +20,8 @@ type Config struct {
 	Version     string
 	Description string
 	CookieName  string
+	// BasePath is the API prefix the UI assets are served under, e.g. /api/v1.
+	BasePath string
 }
 
 // Build generates an OpenAPI 3.0.3 document. It is deterministic: routes are

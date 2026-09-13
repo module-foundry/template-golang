@@ -40,9 +40,11 @@ only calls `Register` on the public or protected router.
 1. `RequestID` middleware assigns/propagates `X-Request-ID`.
 2. `RequestLogger` builds a request-scoped logger and puts it in the context.
 3. `recover`, `cors`, `helmet` (and `pprof` when enabled).
-4. `/auth/*` routes are public; everything else that needs auth is mounted on
-   the protected group (`middleware.Auth`): cookie `access_token` first, then
-   `Authorization: Bearer`.
+4. Routes are mounted under `API_BASE_PATH` (default `/api/v1`). `/auth/*` routes
+   and docs are public; everything that needs auth is mounted on the protected
+   group (`middleware.Auth`): cookie `access_token` first, then
+   `Authorization: Bearer`. In Fiber the group middleware only guards routes
+   registered after it, so public routes and docs are registered first.
 5. Typed handler: strict JSON parse -> validation -> service.
 6. Errors are returned and formatted/logged once by `apperror.Handler`.
 
@@ -71,7 +73,7 @@ Comma-separated values are parsed into typed slices.
 ## API contract
 
 Routes are registered only through `pkg/httpx`; the registry feeds runtime
-OpenAPI (`/openapi.json`, `/docs`). `docs/openapi.json` is golden-tested, route
+OpenAPI (`{API_BASE_PATH}/openapi.json`, `{API_BASE_PATH}/docs`). `docs/openapi.json` is golden-tested, route
 tables are snapshot-tested, and `oasdiff breaking` runs in CI. Changing the
 public contract without an explicit request fails the pipeline.
 

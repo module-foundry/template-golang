@@ -19,8 +19,9 @@ task dev          # hot reload (Air); migrations are applied on startup
 
 VS Code: press `F5` to run the API under dlv (uses `.env`).
 
-Useful endpoints: `/healthz`, `/readyz`, `/docs` (Scalar UI), `/openapi.json`.
-Auth stub: `POST /auth/mini-apps/telegram`.
+API prefix is `API_BASE_PATH` (default `/api/v1`).
+Useful endpoints: `/healthz`, `/readyz`, `/api/v1/docs` (Scalar UI), `/api/v1/openapi.json`.
+Auth stub: `POST /api/v1/auth/mini-apps/telegram`.
 
 ## Documentation
 
