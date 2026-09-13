@@ -77,6 +77,40 @@ func TestNoContent(t *testing.T) {
 	}
 }
 
+// TestEnvelopeGolden locks the success shape to exactly one "result" key.
+func TestEnvelopeGolden(t *testing.T) {
+	got, err := jsonx.MarshalDeterministic(Envelope{Result: map[string]string{"status": "ok"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = `{"result":{"status":"ok"}}`
+	if string(got) != want {
+		t.Fatalf("envelope = %s, want %s", got, want)
+	}
+}
+
+// TestPaginationShape locks the list convention: result.pagination.<params>.
+func TestPaginationShape(t *testing.T) {
+	type item struct {
+		ID string `json:"id"`
+	}
+	type listResult struct {
+		Items      []item     `json:"items"`
+		Pagination Pagination `json:"pagination"`
+	}
+	got, err := jsonx.MarshalDeterministic(Envelope{Result: listResult{
+		Items:      []item{{ID: "1"}},
+		Pagination: Pagination{Page: 2, PerPage: 20, Total: 57},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = `{"result":{"items":[{"id":"1"}],"pagination":{"page":2,"per_page":20,"total":57}}}`
+	if string(got) != want {
+		t.Fatalf("list envelope = %s, want %s", got, want)
+	}
+}
+
 func TestFailUsesRegistry(t *testing.T) {
 	app := newApp()
 	app.Get("/fail", func(c fiber.Ctx) error {

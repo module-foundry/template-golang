@@ -17,6 +17,15 @@ type Envelope struct {
 	Result any `json:"result"`
 }
 
+// Pagination is the canonical page metadata of a list response. It lives at
+// result.pagination, never at the envelope root. Total pages are derived from
+// Total/PerPage, so they are not duplicated on the wire.
+type Pagination struct {
+	Page    int `json:"page"`
+	PerPage int `json:"per_page"`
+	Total   int `json:"total"`
+}
+
 // OK writes a 200 response with the payload under "result".
 func OK(c fiber.Ctx, v any) error {
 	return c.Status(fiber.StatusOK).JSON(Envelope{Result: v})

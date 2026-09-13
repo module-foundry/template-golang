@@ -35,17 +35,6 @@
 
 ## Формат ответа
 
-Успешные ответы оборачивают payload в `result`:
-
-```json
-{
-  "result": {
-    "token": "jwt",
-    "user_id": "42"
-  }
-}
-```
-
 Ошибки приходят в конверте `error`:
 
 ```json
@@ -56,3 +45,6 @@
   }
 }
 ```
+
+Успешные тела (`result`) и пагинация (`result.pagination`) описаны в
+`docs/api-conventions/`.

@@ -77,6 +77,10 @@ live in `.opencode/skills/`.
 
 - All responses go through `pkg/response`; routes are registered only via
   `pkg/httpx` typed helpers (they feed the OpenAPI registry).
+- Success is `{"result": <DTO>}` (204 has no body), errors use the `error`
+  envelope. One level, no `result.data`, no arrays-of-one; pagination is
+  `result.pagination` with `page`/`per_page`/`total` (`pkg/response.Pagination`).
+  Full rules: `docs/api-conventions/{en,ru}.md`.
 - The public contract (routes, paths, methods, `operationId`, DTO fields, error
   codes, statuses) is frozen. Change it only on an explicit request for that
   specific route/DTO; "improving" unrelated endpoints is forbidden.

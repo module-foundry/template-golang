@@ -54,8 +54,9 @@ Two kinds: `API` (4xx, safe message) and `Runtime` (5xx, generic message,
 cause only in logs). Codes are constants in `pkg/apperror/codes.go` with a
 minimal, stable set; HTTP statuses come from `fiber.Status*` constants.
 Success bodies go through `pkg/response` and wrap the payload as
-`{"result": ...}`; errors use the `error` envelope, so clients can tell the two
-apart without inspecting the status code.
+`{"result": ...}` (pagination: `result.pagination`); errors use the `error`
+envelope, so clients can tell the two apart without inspecting the status code.
+See `docs/api-conventions/`.
 
 Error log fields: `type`, `message`, `trace`, `kind`, `http_status`,
 `request_id`, `user_id`, and `error` (cause) for runtime errors.

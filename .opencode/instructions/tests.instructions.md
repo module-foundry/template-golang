@@ -24,8 +24,9 @@ Bug fixes always start with a test that reproduces the bug.
   error paths. A change to exported API is a breaking change: tests and
   `docs/architecture/{en,ru}.md` are updated in the same change.
 - `pkg/*` coverage gate is >= 90% and only grows (`task test:cover`).
-- Golden tests protect formats: error envelope, log fields, JWT claims,
-  `docs/openapi.json`, `docs/error-codes/{en,ru}.md`.
+- Golden tests protect formats: success envelope (`result`, `result.pagination`),
+  error envelope, log fields, JWT claims, `docs/openapi.json`,
+  `docs/error-codes/{en,ru}.md`.
 
 ## Fuzzing and benchmarks
 
